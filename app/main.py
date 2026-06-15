@@ -18,8 +18,8 @@ async def read_item(request: Request):
 async def get_next_sequence():
     try:
         # Check if the file exists before trying to read it
-        if os.path.exists("mock_historical_data.csv"):
-            df = pd.read_csv("mock_historical_data.csv")
+        if os.path.exists("historical_data.csv"):
+            df = pd.read_csv("historical_data.csv")
             # Find the absolute highest sequence number in the file
             highest_seq = int(df['draw_seq'].max())
             return {"next_sequence": highest_seq + 1}
