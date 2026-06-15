@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golden Ratio Quantum Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .ball {
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
@@ -19,7 +20,7 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-xl w-full bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
+    <div class="max-w-2xl w-full bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
         <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">Golden Wave Generator</h1>
         <p class="text-gray-400 text-center mb-8 text-sm">Decoupled statistical frequency mapped to quantum jitter.</p>
 
@@ -47,13 +48,19 @@
 
         <div id="resultsContainer" class="hidden">
             <h2 class="text-lg font-semibold text-center text-gray-300 mb-4 border-t border-gray-700 pt-6">Resulting Sequence</h2>
-            <div id="ballsWrapper" class="flex justify-center items-center gap-3 flex-wrap">
+            <div id="ballsWrapper" class="flex justify-center items-center gap-3 flex-wrap mb-8">
                 </div>
+            
+            <h2 class="text-sm font-semibold text-center text-gray-400 mb-2">Wave Mechanics Analysis</h2>
+            <div class="w-full bg-gray-900 rounded-lg p-4 border border-gray-700">
+                <canvas id="waveChart" height="100"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
-        // Auto-fetch sequence number on load
+        let waveChartInstance = null; // Hold the chart so we can redraw it
+
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('api/next-sequence');
@@ -62,16 +69,16 @@
             } catch (err) { console.error("Could not fetch sequence"); }
         });
 
-        // Form submission
         document.getElementById('drawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const seq = document.getElementById('seqInput').value;
-            const jitter = document.getElementById('jitterInput').value;
+            const seq = parseFloat(document.getElementById('seqInput').value);
+            const jitter = parseFloat(document.getElementById('jitterInput').value);
             const btn = e.target.querySelector('button');
             const wrapper = document.getElementById('ballsWrapper');
             const lirazNote = document.getElementById('lirazNote');
             
             const notes = [
+                "לירז את אלופה! ❤️",
                 "Liraz, you are my Already a Millionaire. ❤️",
                 "Liraz, you are my golden ratio. ❤️",
                 "I love you more than quantum randomness, Liraz! ✨",
@@ -89,7 +96,7 @@
                 "I'd spend all my money traveling with you, Liraz. 🌴💳",
                 "Liraz, you're my million-dollar smile and my greatest treasure. 😄💎",
                 "With you, every day feels like a luxurious vacation, Liraz. 🏖️💕",
-                "Liraz, our love story is worth more than bitcoin, Liraz. 💰📱❤️",
+                "Liraz, our love story is worth more than bitcoin. 💰📱❤️",
                 "You're the jackpot I never knew I needed, Liraz. 🎰💕",
                 "Liraz, let's collect memories instead of money—with you, I'm already rich. 📸✨"
             ];
@@ -97,17 +104,19 @@
             lirazNote.textContent = notes[Math.floor(Math.random() * notes.length)];
             lirazNote.classList.remove('opacity-0');
 
-            // Set UI Loading State
             btn.disabled = true;
-            btn.textContent = "Calculating...";
+            btn.textContent = "Calculating Wave Integration...";
             wrapper.innerHTML = ''; 
             document.getElementById('resultsContainer').classList.remove('hidden');
+
+            // --- NEW: Draw the Chart ---
+            drawWaveChart(seq, jitter);
+            // ---------------------------
 
             try {
                 const res = await fetch(`api/draw?seq=${seq}&jitter=${jitter}`);
                 const data = await res.json();
                 
-                // Render main 6
                 data.yielded_numbers.forEach((num, i) => {
                     const b = document.createElement('div');
                     b.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-gray-900 font-bold text-xl shadow-lg';
@@ -116,13 +125,11 @@
                     setTimeout(() => b.classList.add('show'), i * 100);
                 });
 
-                // Render Strong Number Separator
                 const plus = document.createElement('div');
                 plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
                 plus.textContent = '+';
                 wrapper.appendChild(plus);
 
-                // Render Strong Number
                 const sBall = document.createElement('div');
                 sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
                 sBall.textContent = data.strong_number;
@@ -137,6 +144,78 @@
                 btn.textContent = "Generate Quantum Draw";
             }
         });
+
+        // --- NEW: The Chart Drawing Function ---
+        function drawWaveChart(seq, jitter) {
+            const ctx = document.getElementById('waveChart').getContext('2d');
+            const PHI = (1 + Math.sqrt(5)) / 2;
+            const t_adjusted = seq + jitter;
+
+            // Generate the data points for the wave (mapping 3 sequences back and 3 forward)
+            const labels = [];
+            const dataPoints = [];
+            const pointColors = [];
+            const pointRadii = [];
+
+            for (let t = seq - 3; t <= seq + 3; t += 0.05) {
+                const currentT = parseFloat(t.toFixed(2));
+                labels.push(currentT);
+                
+                // The exact math from your Python engine: np.sin((2 * np.pi / PHI) * t_adjusted)
+                const waveValue = Math.sin((2 * Math.PI / PHI) * currentT);
+                dataPoints.push(waveValue);
+
+                // Highlight the exact specific moment of the draw with a red dot
+                if (Math.abs(currentT - t_adjusted) < 0.03) {
+                    pointColors.push('rgba(239, 68, 68, 1)'); // Tailwind red-500
+                    pointRadii.push(6);
+                } else {
+                    pointColors.push('rgba(0,0,0,0)'); // Hidden
+                    pointRadii.push(0);
+                }
+            }
+
+            // Destroy old chart if you click Generate multiple times
+            if (waveChartInstance) {
+                waveChartInstance.destroy();
+            }
+
+            waveChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Golden Phase',
+                        data: dataPoints,
+                        borderColor: 'rgba(250, 204, 21, 0.6)', // Tailwind yellow-400
+                        borderWidth: 2,
+                        tension: 0.4, // Makes the line a smooth curve
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+                        pointRadius: pointRadii,
+                        pointHoverRadius: pointRadii
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: { display: false }, // Hide the messy bottom axis numbers
+                        y: {
+                            display: true,
+                            grid: { color: 'rgba(75, 85, 99, 0.3)' }, // Faint gray grid
+                            min: -1.2,
+                            max: 1.2,
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
