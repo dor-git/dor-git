@@ -23,7 +23,7 @@
         <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">Golden Wave Generator</h1>
         <p class="text-gray-400 text-center mb-8 text-sm">Decoupled statistical frequency mapped to quantum jitter.</p>
 
-        <form id="drawForm" class="space-y-6 mb-8">
+        <form id="drawForm" class="space-y-6 mb-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Draw Sequence</label>
@@ -42,6 +42,8 @@
                 Generate Quantum Draw
             </button>
         </form>
+
+        <div id="lirazNote" class="text-center mb-6 text-pink-400 font-medium italic min-h-[24px] transition-opacity duration-300 opacity-0"></div>
 
         <div id="resultsContainer" class="hidden">
             <h2 class="text-lg font-semibold text-center text-gray-300 mb-4 border-t border-gray-700 pt-6">Resulting Sequence</h2>
@@ -67,7 +69,35 @@
             const jitter = document.getElementById('jitterInput').value;
             const btn = e.target.querySelector('button');
             const wrapper = document.getElementById('ballsWrapper');
+            const lirazNote = document.getElementById('lirazNote');
             
+            const notes = [
+                "Liraz, you are my Already a Millionaire. ❤️",
+                "Liraz, you are my golden ratio. ❤️",
+                "I love you more than quantum randomness, Liraz! ✨",
+                "This sequence is lucky, but I'm luckier to have you, Liraz. 🌹",
+                "Liraz, you are the absolute best part of my universe. 🌌",
+                "Calculating numbers, but my heart is entirely set on Liraz. 💖",
+                "Liraz, you are my one in a billion. 🥰",
+                "Liraz, you're worth more than all the lottery numbers combined. 💰✨",
+                "With you, I'm richer than any winning jackpot, Liraz. 💎💕",
+                "Liraz, loving you is the best investment I've ever made. 📈❤️",
+                "Every place is home when you're there, Liraz. 🌍🏠",
+                "Liraz, I'd travel a thousand worlds just to see you smile. ✈️😊",
+                "You're my favorite adventure, Liraz. No passport required. 🗺️💖",
+                "Liraz, you're the only number that truly multiplies my happiness. 🎯❤️",
+                "I'd spend all my money traveling with you, Liraz. 🌴💳",
+                "Liraz, you're my million-dollar smile and my greatest treasure. 😄💎",
+                "With you, every day feels like a luxurious vacation, Liraz. 🏖️💕",
+                "Liraz, our love story is worth more than bitcoin, Liraz. 💰📱❤️",
+                "You're the jackpot I never knew I needed, Liraz. 🎰💕",
+                "Liraz, let's collect memories instead of money—with you, I'm already rich. 📸✨"
+            ];
+            
+            lirazNote.textContent = notes[Math.floor(Math.random() * notes.length)];
+            lirazNote.classList.remove('opacity-0');
+
+            // Set UI Loading State
             btn.disabled = true;
             btn.textContent = "Calculating...";
             wrapper.innerHTML = ''; 
@@ -86,12 +116,13 @@
                     setTimeout(() => b.classList.add('show'), i * 100);
                 });
 
-                // Render Strong Number
+                // Render Strong Number Separator
                 const plus = document.createElement('div');
                 plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
                 plus.textContent = '+';
                 wrapper.appendChild(plus);
 
+                // Render Strong Number
                 const sBall = document.createElement('div');
                 sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
                 sBall.textContent = data.strong_number;
@@ -100,7 +131,7 @@
                 setTimeout(() => { plus.classList.add('show'); sBall.classList.add('show'); }, 600);
 
             } catch (err) {
-                wrapper.innerHTML = `<p class="text-red-400">Engine Connection Error</p>`;
+                wrapper.innerHTML = `<p class="text-red-400 text-center w-full">Engine Connection Error</p>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Generate Quantum Draw";
