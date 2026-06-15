@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Ratio Quantum Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .ball {
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        .ball.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-xl w-full bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
+        <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">Golden Wave Generator</h1>
+        <p class="text-gray-400 text-center mb-8 text-sm">Decoupled statistical frequency mapped to quantum jitter.</p>
+
+        <form id="drawForm" class="space-y-6 mb-8">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Draw Sequence</label>
+                    <input type="number" id="seqInput" required min="1" 
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Chaos Jitter</label>
+                    <input type="number" id="jitterInput" required step="0.01" min="0" value="0.10"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+            </div>
+            
+            <button type="submit" 
+                class="w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-4 rounded-lg transition-all duration-200">
+                Generate Quantum Draw
+            </button>
+        </form>
+
+        <div id="resultsContainer" class="hidden">
+            <h2 class="text-lg font-semibold text-center text-gray-300 mb-4 border-t border-gray-700 pt-6">Resulting Sequence</h2>
+            <div id="ballsWrapper" class="flex justify-center items-center gap-3 flex-wrap">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-fetch sequence number on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('api/next-sequence');
+                const data = await response.json();
+                document.getElementById('seqInput').value = data.next_sequence;
+            } catch (err) { console.error("Could not fetch sequence"); }
+        });
+
+        // Form submission
+        document.getElementById('drawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const seq = document.getElementById('seqInput').value;
+            const jitter = document.getElementById('jitterInput').value;
+            const btn = e.target.querySelector('button');
+            const wrapper = document.getElementById('ballsWrapper');
+            
+            btn.disabled = true;
+            btn.textContent = "Calculating...";
+            wrapper.innerHTML = ''; 
+            document.getElementById('resultsContainer').classList.remove('hidden');
+
+            try {
+                const res = await fetch(`api/draw?seq=${seq}&jitter=${jitter}`);
+                const data = await res.json();
+                
+                // Render main 6
+                data.yielded_numbers.forEach((num, i) => {
+                    const b = document.createElement('div');
+                    b.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-gray-900 font-bold text-xl shadow-lg';
+                    b.textContent = num;
+                    wrapper.appendChild(b);
+                    setTimeout(() => b.classList.add('show'), i * 100);
+                });
+
+                // Render Strong Number
+                const plus = document.createElement('div');
+                plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
+                plus.textContent = '+';
+                wrapper.appendChild(plus);
+
+                const sBall = document.createElement('div');
+                sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
+                sBall.textContent = data.strong_number;
+                wrapper.appendChild(sBall);
+
+                setTimeout(() => { plus.classList.add('show'); sBall.classList.add('show'); }, 600);
+
+            } catch (err) {
+                wrapper.innerHTML = `<p class="text-red-400">Engine Connection Error</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Generate Quantum Draw";
+            }
+        });
+    </script>
+</body>
+</html>
