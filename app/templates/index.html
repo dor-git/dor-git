@@ -59,8 +59,9 @@
     </div>
 
     <script>
-        let waveChartInstance = null; // Hold the chart so we can redraw it
+        let waveChartInstance = null; // Hold the chart instance
 
+        // Auto-fetch the next sequence number on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('api/next-sequence');
@@ -69,6 +70,7 @@
             } catch (err) { console.error("Could not fetch sequence"); }
         });
 
+        // Form submission listener
         document.getElementById('drawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const seq = parseFloat(document.getElementById('seqInput').value);
@@ -77,8 +79,8 @@
             const wrapper = document.getElementById('ballsWrapper');
             const lirazNote = document.getElementById('lirazNote');
             
+            // The Expanded Liraz Easter Egg
             const notes = [
-                "לירז את אלופה! ❤️",
                 "Liraz, you are my Already a Millionaire. ❤️",
                 "Liraz, you are my golden ratio. ❤️",
                 "I love you more than quantum randomness, Liraz! ✨",
@@ -109,14 +111,15 @@
             wrapper.innerHTML = ''; 
             document.getElementById('resultsContainer').classList.remove('hidden');
 
-            // --- NEW: Draw the Chart ---
+            // Draw the Chart
             drawWaveChart(seq, jitter);
-            // ---------------------------
 
             try {
+                // Fetch generated numbers from Python Backend
                 const res = await fetch(`api/draw?seq=${seq}&jitter=${jitter}`);
                 const data = await res.json();
                 
+                // Render main 6 numbers
                 data.yielded_numbers.forEach((num, i) => {
                     const b = document.createElement('div');
                     b.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-gray-900 font-bold text-xl shadow-lg';
@@ -125,11 +128,13 @@
                     setTimeout(() => b.classList.add('show'), i * 100);
                 });
 
+                // Render Strong Number Separator
                 const plus = document.createElement('div');
                 plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
                 plus.textContent = '+';
                 wrapper.appendChild(plus);
 
+                // Render Strong Number
                 const sBall = document.createElement('div');
                 sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
                 sBall.textContent = data.strong_number;
@@ -145,27 +150,26 @@
             }
         });
 
-        // --- NEW: The Chart Drawing Function ---
+        // The Chart Drawing Function with Label Plugin
         function drawWaveChart(seq, jitter) {
             const ctx = document.getElementById('waveChart').getContext('2d');
             const PHI = (1 + Math.sqrt(5)) / 2;
             const t_adjusted = seq + jitter;
 
-            // Generate the data points for the wave (mapping 3 sequences back and 3 forward)
             const labels = [];
             const dataPoints = [];
             const pointColors = [];
             const pointRadii = [];
 
+            // Calculate points 3 sequences back and 3 sequences forward
             for (let t = seq - 3; t <= seq + 3; t += 0.05) {
                 const currentT = parseFloat(t.toFixed(2));
                 labels.push(currentT);
                 
-                // The exact math from your Python engine: np.sin((2 * np.pi / PHI) * t_adjusted)
                 const waveValue = Math.sin((2 * Math.PI / PHI) * currentT);
                 dataPoints.push(waveValue);
 
-                // Highlight the exact specific moment of the draw with a red dot
+                // Highlight the specific draw moment with a red dot
                 if (Math.abs(currentT - t_adjusted) < 0.03) {
                     pointColors.push('rgba(239, 68, 68, 1)'); // Tailwind red-500
                     pointRadii.push(6);
@@ -175,10 +179,34 @@
                 }
             }
 
-            // Destroy old chart if you click Generate multiple times
+            // Destroy old chart before rendering new one
             if (waveChartInstance) {
                 waveChartInstance.destroy();
             }
+
+            // Custom plugin to draw the exact number above the red dot
+            const redDotLabelPlugin = {
+                id: 'redDotLabel',
+                afterDatasetsDraw(chart) {
+                    const { ctx, data } = chart;
+                    const meta = chart.getDatasetMeta(0);
+                    
+                    data.datasets[0].pointBackgroundColor.forEach((color, index) => {
+                        if (color === 'rgba(239, 68, 68, 1)') {
+                            const x = meta.data[index].x;
+                            const y = meta.data[index].y;
+                            const value = data.labels[index].toFixed(2); // Show value to 2 decimal places
+                            
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // White text
+                            ctx.font = 'bold 12px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(value, x, y - 12); // Position it 12px above the dot
+                            ctx.restore();
+                        }
+                    });
+                }
+            };
 
             waveChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -189,7 +217,7 @@
                         data: dataPoints,
                         borderColor: 'rgba(250, 204, 21, 0.6)', // Tailwind yellow-400
                         borderWidth: 2,
-                        tension: 0.4, // Makes the line a smooth curve
+                        tension: 0.4, // Smooth curve
                         pointBackgroundColor: pointColors,
                         pointBorderColor: pointColors,
                         pointRadius: pointRadii,
@@ -204,7 +232,7 @@
                         tooltip: { enabled: false }
                     },
                     scales: {
-                        x: { display: false }, // Hide the messy bottom axis numbers
+                        x: { display: false }, 
                         y: {
                             display: true,
                             grid: { color: 'rgba(75, 85, 99, 0.3)' }, // Faint gray grid
@@ -213,7 +241,8 @@
                             ticks: { display: false }
                         }
                     }
-                }
+                },
+                plugins: [redDotLabelPlugin] // Inject the text-drawing plugin here
             });
         }
     </script>
