@@ -21,8 +21,31 @@
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-2xl w-full bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
-        <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">Golden Wave Generator</h1>
-        <p class="text-gray-400 text-center mb-8 text-sm">Decoupled statistical frequency mapped to quantum jitter.</p>
+        <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">&phi; Golden Wave Generator 🍀</h1>
+        <p class="text-gray-400 text-center mb-6 text-sm">Decoupled statistical frequency mapped to quantum jitter.</p>
+
+        <div class="mb-8 border border-gray-700 rounded-lg bg-gray-900/50 overflow-hidden">
+            <button type="button" id="guideToggle" class="w-full px-4 py-3 text-left text-sm font-semibold text-gray-300 hover:bg-gray-700 focus:outline-none flex justify-between items-center transition-colors">
+                <span>Wave Tuning Guide</span>
+                <svg id="guideIcon" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="guideContent" class="hidden px-4 py-3 text-sm text-gray-400 border-t border-gray-700 space-y-3 bg-gray-800">
+                <div>
+                    <strong class="text-yellow-500">Step 1: Calibration (Backtesting)</strong><br>
+                    Set Sequence to a past draw. Sweep Jitter (0.00 - 1.61) until results match the historical draw. Note the red dot's exact position on the wave.
+                </div>
+                <div>
+                    <strong class="text-yellow-500">Step 2: Projection</strong><br>
+                    Step Sequence forward by 1 (+1). Adjust Jitter until the red dot aligns perfectly with the phase/position from Step 1.
+                </div>
+                <div>
+                    <strong class="text-yellow-500">Step 3: Harvesting</strong><br>
+                    Do not change inputs. Click Generate 5-10 times. Record the most frequent numbers to assemble your probability cluster.
+                </div>
+            </div>
+        </div>
 
         <form id="drawForm" class="space-y-6 mb-4">
             <div class="grid grid-cols-2 gap-4">
@@ -60,6 +83,14 @@
 
     <script>
         let waveChartInstance = null; // Hold the chart instance
+
+        // NEW: Toggle logic for the Tuning Guide
+        document.getElementById('guideToggle').addEventListener('click', () => {
+            const content = document.getElementById('guideContent');
+            const icon = document.getElementById('guideIcon');
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        });
 
         // Auto-fetch the next sequence number on page load
         document.addEventListener('DOMContentLoaded', async () => {
