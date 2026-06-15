@@ -8,6 +8,7 @@ from app.engine import generate_golden_numbers
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 
+@app.head("/")
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
