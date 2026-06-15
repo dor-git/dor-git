@@ -32,7 +32,7 @@ async def get_next_sequence():
 @app.get("/api/draw")
 async def get_draw(seq: int, jitter: float = 0.1):
     main_numbers, strong_number = generate_golden_numbers(
-        historical_data_path="mock_historical_data.csv", 
+        historical_data_path="historical_data.csv", 
         quantum_csv_path="quantum_seed.csv",
         next_draw_seq=seq, 
         jitter_strength=jitter
