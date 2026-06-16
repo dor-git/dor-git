@@ -28,47 +28,51 @@ async def get_next_sequence():
     except Exception as e:
         print(f"Error reading sequence: {e}")
         return {"next_sequence": 1} # Fallback on read error
+
 @app.get("/api/auto-tune")
 async def auto_tune_jitter(seq: int):
     try:
-        # We want to backtest the PREVIOUS draw to calibrate for the CURRENT one
         past_seq = seq - 1 
-        
         df = pd.read_csv(HISTORICAL_FILE)
         past_draw = df[df['draw_seq'] == past_seq]
         
         if past_draw.empty:
-            return {"optimal_jitter": 0.10, "message": "Previous sequence not found. Defaulting."}
+            return {"optimal_jitter": 0.10, "message": "Previous sequence not found."}
             
-        # Extract the real historical numbers
-        real_numbers = set(past_draw.iloc[0][['p1', 'p2', 'p3', 'p4', 'p5', 'p6']].values)
-        real_strong = past_draw.iloc[0]['strong_num']
+        # Convert to standard Python integers to guarantee exact matching
+        real_numbers = set([int(x) for x in past_draw.iloc[0][['p1', 'p2', 'p3', 'p4', 'p5', 'p6']].values])
+        real_strong = int(past_draw.iloc[0]['strong_num'])
         
         best_jitter = 0.00
         highest_score = -1
         
-        # Sweep the Golden Wave from 0.00 to 1.61 in steps of 0.05
+        print(f"\n--- STARTING AUTO-TUNE FOR PAST SEQ {past_seq} ---")
+        print(f"Target Numbers: {real_numbers} | Target Strong: {real_strong}")
+        
         for j in np.arange(0.00, 1.62, 0.05):
             current_jitter = round(j, 2)
             total_score = 0
             
-            # Sample 3 times per jitter to account for quantum variance
             for _ in range(3):
                 main_nums, strong = generate_golden_numbers(
                     HISTORICAL_FILE, QUANTUM_FILE, past_seq, current_jitter
                 )
                 
-                # Scoring System: +1 for main numbers, +3 for strong number
                 matches = len(set(main_nums).intersection(real_numbers))
                 total_score += matches
                 if strong == real_strong:
-                    total_score += 3
+                    total_score += 3  # Strong number hits are worth 3 points
                     
-            # Keep track of the highest scoring jitter
             if total_score > highest_score:
                 highest_score = total_score
                 best_jitter = current_jitter
                 
+            # Log every single step to the terminal!
+            print(f"Jitter {current_jitter:.2f} | Total Score: {total_score}")
+            
+        print(f">>> WINNER: Jitter {best_jitter} with Score {highest_score}")
+        print("-------------------------------------------------\n")
+        
         return {"optimal_jitter": best_jitter, "score": highest_score}
         
     except Exception as e:
