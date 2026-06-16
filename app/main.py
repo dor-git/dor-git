@@ -28,6 +28,52 @@ async def get_next_sequence():
     except Exception as e:
         print(f"Error reading sequence: {e}")
         return {"next_sequence": 1} # Fallback on read error
+@app.get("/api/auto-tune")
+async def auto_tune_jitter(seq: int):
+    try:
+        # We want to backtest the PREVIOUS draw to calibrate for the CURRENT one
+        past_seq = seq - 1 
+        
+        df = pd.read_csv(HISTORICAL_FILE)
+        past_draw = df[df['draw_seq'] == past_seq]
+        
+        if past_draw.empty:
+            return {"optimal_jitter": 0.10, "message": "Previous sequence not found. Defaulting."}
+            
+        # Extract the real historical numbers
+        real_numbers = set(past_draw.iloc[0][['p1', 'p2', 'p3', 'p4', 'p5', 'p6']].values)
+        real_strong = past_draw.iloc[0]['strong_num']
+        
+        best_jitter = 0.00
+        highest_score = -1
+        
+        # Sweep the Golden Wave from 0.00 to 1.61 in steps of 0.05
+        for j in np.arange(0.00, 1.62, 0.05):
+            current_jitter = round(j, 2)
+            total_score = 0
+            
+            # Sample 3 times per jitter to account for quantum variance
+            for _ in range(3):
+                main_nums, strong = generate_golden_numbers(
+                    HISTORICAL_FILE, QUANTUM_FILE, past_seq, current_jitter
+                )
+                
+                # Scoring System: +1 for main numbers, +3 for strong number
+                matches = len(set(main_nums).intersection(real_numbers))
+                total_score += matches
+                if strong == real_strong:
+                    total_score += 3
+                    
+            # Keep track of the highest scoring jitter
+            if total_score > highest_score:
+                highest_score = total_score
+                best_jitter = current_jitter
+                
+        return {"optimal_jitter": best_jitter, "score": highest_score}
+        
+    except Exception as e:
+        print(f"Auto-tune error: {e}")
+        return {"optimal_jitter": 0.10, "message": "Error calculating. Defaulting."}
 
 @app.get("/api/draw")
 async def get_draw(seq: int, jitter: float = 0.1):
