@@ -16,7 +16,8 @@ QUANTUM_FILE = "quantum_seed.csv"
 
 @app.get("/")
 async def read_item(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Pass the request object explicitly as a keyword argument
+    return templates.TemplateResponse(request=request, name="index.html")
 
 @app.get("/api/next-sequence")
 async def get_next_sequence():
