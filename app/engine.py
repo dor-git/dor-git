@@ -1,95 +1,101 @@
 import numpy as np
-import pandas as pd
+import time
+import os
 
-PHI = (1 + np.sqrt(5)) / 2
-
-def generate_golden_numbers(historical_data_path, quantum_csv_path, next_draw_seq, jitter_strength=0.1):
-    # ---------------------------------------------------------
-    # 1. LOAD HISTORICAL DATA (Both Pools)
-    # ---------------------------------------------------------
+def simulate_kinematic_draw(historical_data_path, quantum_csv_path, next_draw_seq, motor_hz, kinetic_hz):
+    print(f"\n=======================================================")
+    print(f"[KINEMATICS ENGINE] BOOTING DRUM SIMULATION FOR SEQ {next_draw_seq}")
+    print(f"=======================================================")
+    
+    # 1. NEW: Parse Comma-Separated Quantum Seed
     try:
-        df_history = pd.read_csv(historical_data_path)
+        with open(quantum_csv_path, 'r') as file:
+            raw_text = file.read()
+            
+        # Clean the text: remove the header and replace line breaks with commas
+        cleaned_text = raw_text.replace('quantum_number', '').replace('\n', ',')
         
-        # Main 6 Numbers (1-37)
-        all_picks = df_history[['p1', 'p2', 'p3', 'p4', 'p5', 'p6']].values.flatten()
-        counts = pd.Series(all_picks).value_counts()
-        hist_weights_main = {i: counts.get(i, 0) + 5 for i in range(1, 38)} # +5 smoothing
-        max_freq_main = max(hist_weights_main.values())
-        hist_weights_main = {k: v / max_freq_main for k, v in hist_weights_main.items()}
+        # Split by comma, strip spaces, and keep only actual numbers
+        quantum_pool = np.array([
+            int(x.strip()) for x in cleaned_text.split(',') 
+            if x.strip().isdigit()
+        ])
         
-        # Strong Number (1-7)
-        strong_picks = df_history['strong_num'].values
-        strong_counts = pd.Series(strong_picks).value_counts()
-        hist_weights_strong = {i: strong_counts.get(i, 0) + 5 for i in range(1, 8)} # +5 smoothing
-        max_freq_strong = max(hist_weights_strong.values())
-        hist_weights_strong = {k: v / max_freq_strong for k, v in hist_weights_strong.items()}
-
+        if len(quantum_pool) == 0:
+            raise ValueError("No valid numbers found in the file.")
+            
     except Exception as e:
-        print(f"Warning: Failed to load historical data. {e}")
-        hist_weights_main = {i: 1.0 for i in range(1, 38)}
-        hist_weights_strong = {i: 1.0 for i in range(1, 8)}
+        print(f"[ERROR] Could not load/parse Quantum Seed: {e}")
+        return [1, 2, 3, 4, 5, 6], 1
 
-    # ---------------------------------------------------------
-    # 2. CALCULATE WAVES
-    # ---------------------------------------------------------
-    jitter = np.random.normal(0, jitter_strength)
-    t_adjusted = next_draw_seq + jitter
-    wave_value = np.sin((2 * np.pi / PHI) * t_adjusted)
-    normalized_wave = (wave_value + 1) / 2
+    total_pool_size = len(quantum_pool)
     
-    # Map wave to 1-37 pool
-    target_center_main = 1 + int(normalized_wave * 36)
-    balls_main = np.arange(1, 38)
-    wave_weights_main = 1 / (np.abs(balls_main - target_center_main) + 1)
-    wave_weights_main /= wave_weights_main.max()
-
-    # Map same wave to 1-7 pool
-    target_center_strong = 1 + int(normalized_wave * 6)
-    balls_strong = np.arange(1, 8)
-    wave_weights_strong = 1 / (np.abs(balls_strong - target_center_strong) + 1)
-    wave_weights_strong /= wave_weights_strong.max()
-
-    # ---------------------------------------------------------
-    # 3. COMBINE WEIGHTS
-    # ---------------------------------------------------------
-    final_main = {ball: hist_weights_main[ball] * wave_weights_main[i] for i, ball in enumerate(balls_main)}
-    final_main = {k: v / max(final_main.values()) for k, v in final_main.items()}
-
-    final_strong = {ball: hist_weights_strong[ball] * wave_weights_strong[i] for i, ball in enumerate(balls_strong)}
-    final_strong = {k: v / max(final_strong.values()) for k, v in final_strong.items()}
-
-    # ---------------------------------------------------------
-    # 4. QUANTUM REJECTION SAMPLING
-    # ---------------------------------------------------------
-    try:
-        df_quantum = pd.read_csv(quantum_csv_path)
-        quantum_pool = df_quantum['quantum_number'].tolist()
-    except Exception:
-        quantum_pool = np.random.randint(1, 38, size=5000).tolist()
+    # 2. Stateless pointer drop-in
+    ns_time = time.time_ns() 
+    current_pointer = ns_time % total_pool_size
+    
+    selected_balls = []
+    search_space = list(range(1, 38))
+    
+    # Physical Simulation Parameters
+    t = 0.0          
+    time_step = 0.01 
+    trapdoor_threshold = 1.90 
+    
+    print(f"[PHYSICS] Motor Set: {motor_hz}Hz | Kinetic Set: {kinetic_hz}Hz")
+    print(f"[PHYSICS] Trapdoor opens at amplitude > {trapdoor_threshold}")
+    print(f"[DATA] Successfully loaded {total_pool_size} quantum numbers.")
+    print("\n[SIMULATION] --- SPINNING DRUM ---")
+    
+    # Simulate time moving forward until 6 balls are ejected
+    while len(selected_balls) < 6:
+        # Calculate the Beat Frequency at the current millisecond
+        w1 = np.sin(2 * np.pi * motor_hz * t)
+        w2 = np.sin(2 * np.pi * kinetic_hz * t)
+        compound_amplitude = w1 + w2
         
-    chosen_main = set()
-    chosen_strong = None
+        # If the wave spikes, the trapdoor opens!
+        if compound_amplitude > trapdoor_threshold:
+            # The Quantum measurement occurs ONLY at this exact millisecond
+            raw_q = quantum_pool[current_pointer]
+            
+            # Map the raw quantum integer to the remaining balls in the drum
+            index_to_pluck = raw_q % len(search_space)
+            ejected_ball = search_space.pop(index_to_pluck)
+            
+            selected_balls.append(ejected_ball)
+            
+            print(f"  [!] RESONANCE SPIKE at {t:.2f}s (Amp: {compound_amplitude:.3f})")
+            print(f"      -> Trapdoor Open! Quantum Seed [{raw_q}] ejected Ball {ejected_ball:02d}")
+            
+            # Advance the quantum pointer
+            current_pointer = (current_pointer + 1) % total_pool_size
+            
+            # Jump time forward slightly so we don't immediately trigger on the same peak
+            t += 0.1 
+        
+        # Advance time naturally
+        t += time_step
+
+    # Seek Strong Number (1-7) using the next resonance spike
+    strong_num = 1
+    print("\n[SIMULATION] --- SEEKING STRONG NUMBER ---")
+    strong_space = list(range(1, 8))
     
-    for q_num in quantum_pool:
-        if len(chosen_main) == 6 and chosen_strong is not None:
+    while True:
+        w1 = np.sin(2 * np.pi * motor_hz * t)
+        w2 = np.sin(2 * np.pi * kinetic_hz * t)
+        if (w1 + w2) > trapdoor_threshold:
+            raw_q = quantum_pool[current_pointer]
+            index = raw_q % len(strong_space)
+            strong_num = strong_space[index]
+            
+            print(f"  [!] FINAL SPIKE at {t:.2f}s | Ejected Strong Num: {strong_num}")
             break
             
-        # Filter for main 6 (1-37)
-        if len(chosen_main) < 6 and 1 <= q_num <= 37 and q_num not in chosen_main:
-            if np.random.random() <= final_main[q_num]:
-                chosen_main.add(q_num)
-                
-        # Filter for strong number (1-7)
-        if chosen_strong is None and 1 <= q_num <= 7:
-            if np.random.random() <= final_strong[q_num]:
-                chosen_strong = q_num
-            
-    # Safety Nets
-    while len(chosen_main) < 6:
-        fb = int(np.random.randint(1, 38))
-        if fb not in chosen_main: chosen_main.add(fb)
+        t += time_step
+
+    print(f"\n[ENGINE] Simulation complete. Total virtual spin time: {t:.2f} seconds.")
+    print(f"=======================================================\n")
     
-    if chosen_strong is None:
-        chosen_strong = int(np.random.randint(1, 8))
-        
-    return sorted(list(chosen_main)), chosen_strong
+    return sorted(selected_balls), strong_num

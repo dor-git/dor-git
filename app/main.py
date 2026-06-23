@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 from app.engine import generate_golden_numbers
+from app.engine import simulate_kinematic_draw
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
@@ -92,12 +93,13 @@ async def auto_tune_jitter(seq: int):
         return {"optimal_jitter": 0.10, "message": "Error calculating. Defaulting."}
 
 @app.get("/api/draw")
-async def get_draw(seq: int, jitter: float = 0.1):
-    main_numbers, strong_number = generate_golden_numbers(
+async def get_draw(seq: int, motor: float = 0.75, kinetic: float = 3.14):
+    main_numbers, strong_number = simulate_kinematic_draw(
         historical_data_path=HISTORICAL_FILE, 
         quantum_csv_path=QUANTUM_FILE,
         next_draw_seq=seq, 
-        jitter_strength=jitter
+        motor_hz=motor,
+        kinetic_hz=kinetic
     )
     return {
         "sequential_draw": seq, 
