@@ -54,12 +54,7 @@
         </div>
 
         <form id="drawForm" class="space-y-6 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Draw Sequence</label>
-                    <input type="number" id="seqInput" required min="1" 
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Motor Base (Hz)</label>
                     <input type="number" id="motorInput" required step="0.01" min="0.1" max="5.0" value="0.75"
@@ -95,27 +90,23 @@
     <script>
         let waveChartInstance = null; // Hold the chart instance
 
-        // Toggle logic for the Kinematic Tuning Guide
-        document.getElementById('guideToggle').addEventListener('click', () => {
-            const content = document.getElementById('guideContent');
-            const icon = document.getElementById('guideIcon');
-            content.classList.toggle('hidden');
-            icon.classList.toggle('rotate-180');
-        });
-
-        // Auto-fetch the next sequence number on page load
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const response = await fetch('api/next-sequence');
-                const data = await response.json();
-                document.getElementById('seqInput').value = data.next_sequence;
-            } catch (err) { console.error("Could not fetch sequence"); }
+        // Safe Dropdown Toggle Logic wrapped in DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const guideToggle = document.getElementById('guideToggle');
+            const guideContent = document.getElementById('guideContent');
+            const guideIcon = document.getElementById('guideIcon');
+            
+            if (guideToggle && guideContent && guideIcon) {
+                guideToggle.addEventListener('click', () => {
+                    guideContent.classList.toggle('hidden');
+                    guideIcon.classList.toggle('rotate-180');
+                });
+            }
         });
 
         // Form submission listener
         document.getElementById('drawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const seq = document.getElementById('seqInput').value;
             const motorHz = document.getElementById('motorInput').value;
             const kineticHz = document.getElementById('kineticInput').value;
             
@@ -159,8 +150,8 @@
             drawResonanceChart(parseFloat(motorHz), parseFloat(kineticHz));
 
             try {
-                // Fetch generated numbers from Python Backend with the new physical parameters
-                const res = await fetch(`api/draw?seq=${seq}&motor=${motorHz}&kinetic=${kineticHz}`);
+                // Fetch generated numbers without the sequence parameter
+                const res = await fetch(`api/draw?motor=${motorHz}&kinetic=${kineticHz}`);
                 const data = await res.json();
                 
                 // Render main 6 numbers
@@ -174,4 +165,46 @@
 
                 // Render Strong Number Separator
                 const plus = document.createElement('div');
-                plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text
+                plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
+                plus.textContent = '+';
+                wrapper.appendChild(plus);
+
+                // Render Strong Number
+                const sBall = document.createElement('div');
+                sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
+                sBall.textContent = data.strong_number;
+                wrapper.appendChild(sBall);
+
+                setTimeout(() => { plus.classList.add('show'); sBall.classList.add('show'); }, 900);
+
+            } catch (err) {
+                console.error(err);
+                wrapper.innerHTML = `<p class="text-red-400 text-center w-full">Hardware Simulation Error</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Spin Virtual Drum";
+            }
+        });
+
+        // The Physical Resonance Chart Function
+        function drawResonanceChart(motorHz, kineticHz) {
+            const ctx = document.getElementById('waveChart').getContext('2d');
+            const labels = [];
+            const dataPoints = [];
+            const pointColors = [];
+            const pointRadii = [];
+
+            // Simulating 3 seconds of physical time in the drum
+            for (let t = 0; t <= 3.0; t += 0.01) {
+                labels.push(t.toFixed(2) + "s");
+                
+                // Beat Frequency Formula: sin(2*pi*f1*t) + sin(2*pi*f2*t)
+                const w1 = Math.sin(2 * Math.PI * motorHz * t);
+                const w2 = Math.sin(2 * Math.PI * kineticHz * t);
+                const compoundWave = w1 + w2; 
+                
+                dataPoints.push(compoundWave);
+
+                // If the pressure spikes past 1.9 (out of a max 2.0), the trapdoor opens!
+                if (compoundWave > 1.9) {
+                    pointColors.push('rgba(239, 68, 68, 1)'); // Red dot
