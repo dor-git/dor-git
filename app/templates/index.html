@@ -17,6 +17,20 @@
             transform: scale(1);
         }
     </style>
+    <script>
+        // FOOLPROOF DROPDOWN LOGIC
+        function toggleGuide() {
+            const content = document.getElementById('guideContent');
+            const icon = document.getElementById('guideIcon');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
 
@@ -25,7 +39,7 @@
         <p class="text-gray-400 text-center mb-6 text-sm">Simulating physical beat frequencies and trapdoor ejection.</p>
 
         <div class="mb-8 border border-gray-700 rounded-lg bg-gray-900/50 overflow-hidden">
-            <button type="button" id="guideToggle" class="w-full px-4 py-3 text-left text-sm font-semibold text-gray-300 hover:bg-gray-700 focus:outline-none flex justify-between items-center transition-colors">
+            <button type="button" onclick="toggleGuide()" class="w-full px-4 py-3 text-left text-sm font-semibold text-gray-300 hover:bg-gray-700 focus:outline-none flex justify-between items-center transition-colors cursor-pointer">
                 <span>⚙️ Kinematic Tuning Guide</span>
                 <svg id="guideIcon" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -34,21 +48,15 @@
             <div id="guideContent" class="hidden px-4 py-3 text-sm text-gray-400 border-t border-gray-700 space-y-4 bg-gray-800">
                 <div>
                     <strong class="text-sky-400">1. Motor Base (Hz) - The Spinning Paddle</strong><br>
-                    This represents the mechanical speed of the machine's base. Standard Smartplay Halogen machines operate at roughly 45 RPM, which translates to <strong>0.75 Hz</strong>. Adjust this to change the primary, steady rhythm of the drum.
+                    Standard Israeli Loto machines use mechanical paddles rotating at ~45-50 RPM (approx <strong>0.75 Hz</strong>). Adjust this to set the drum's primary mechanical rhythm.
                 </div>
                 <div>
                     <strong class="text-sky-400">2. Kinetic Mass (Hz) - The Bouncing Balls</strong><br>
-                    This represents the chaotic interference pattern of the balls hitting the acrylic walls. A default of <strong>3.14 Hz</strong> provides a natural, chaotic ricochet frequency. Adjust this to alter how aggressively the mass interferes with the motor.
+                    The chaos of 37 bouncing spheres creates secondary interference. A value of <strong>3.14 Hz</strong> ($\pi$) provides a natural, chaotic ricochet frequency.
                 </div>
                 <div class="bg-gray-900 p-3 rounded border border-gray-700">
                     <strong class="text-yellow-500">How to Tune (The Red Dots)</strong><br>
-                    Your goal is to find two frequencies that create a clean "Beat Frequency". Spin the drum and watch the graph. 
-                    <ul class="list-disc ml-5 mt-1 space-y-1 text-gray-300">
-                        <li>The <strong>Red Dots</strong> indicate the exact millisecond the trapdoor swings open (Internal Pressure > 1.90).</li>
-                        <li>If there are <strong>no red dots</strong>, the waves are canceling each other out (destructive interference).</li>
-                        <li>If the graph is <strong>flooded with red</strong>, the drum is moving too erratically.</li>
-                        <li>Tune the sliders until you get distinct, rhythmic ejections!</li>
-                    </ul>
+                    Watch the graph for <strong>Red Dots</strong>. These represent the exact milliseconds the trapdoor swings open (Internal Pressure > 1.90). Tune the frequencies until you see distinct, separated peaks.
                 </div>
             </div>
         </div>
@@ -77,8 +85,7 @@
 
         <div id="resultsContainer" class="hidden">
             <h2 class="text-lg font-semibold text-center text-gray-300 mb-4 border-t border-gray-700 pt-6">Ejected Sequence</h2>
-            <div id="ballsWrapper" class="flex justify-center items-center gap-3 flex-wrap mb-8">
-                </div>
+            <div id="ballsWrapper" class="flex justify-center items-center gap-3 flex-wrap mb-8"></div>
             
             <h2 class="text-sm font-semibold text-center text-gray-400 mb-2">Beat Frequency Resonance (Trapdoor Open at Peaks)</h2>
             <div class="w-full bg-gray-900 rounded-lg p-4 border border-gray-700">
@@ -88,23 +95,8 @@
     </div>
 
     <script>
-        let waveChartInstance = null; // Hold the chart instance
+        let waveChartInstance = null;
 
-        // Safe Dropdown Toggle Logic wrapped in DOMContentLoaded
-        document.addEventListener('DOMContentLoaded', () => {
-            const guideToggle = document.getElementById('guideToggle');
-            const guideContent = document.getElementById('guideContent');
-            const guideIcon = document.getElementById('guideIcon');
-            
-            if (guideToggle && guideContent && guideIcon) {
-                guideToggle.addEventListener('click', () => {
-                    guideContent.classList.toggle('hidden');
-                    guideIcon.classList.toggle('rotate-180');
-                });
-            }
-        });
-
-        // Form submission listener
         document.getElementById('drawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const motorHz = document.getElementById('motorInput').value;
@@ -114,30 +106,13 @@
             const wrapper = document.getElementById('ballsWrapper');
             const lirazNote = document.getElementById('lirazNote');
             
-            // The Liraz Easter Egg
             const notes = [
                 "Liraz, you are my Already a Millionaire. ❤️",
                 "Liraz, you are my golden ratio. ❤️",
                 "I love you more than quantum randomness, Liraz! ✨",
-                "This sequence is lucky, but I'm luckier to have you, Liraz. 🌹",
-                "Liraz, you are the absolute best part of my universe. 🌌",
-                "Calculating numbers, but my heart is entirely set on Liraz. 💖",
-                "Liraz, you are my one in a billion. 🥰",
-                "Liraz, you're worth more than all the lottery numbers combined. 💰✨",
-                "With you, I'm richer than any winning jackpot, Liraz. 💎💕",
-                "Liraz, loving you is the best investment I've ever made. 📈❤️",
-                "Every place is home when you're there, Liraz. 🌍🏠",
-                "Liraz, I'd travel a thousand worlds just to see you smile. ✈️😊",
-                "You're my favorite adventure, Liraz. No passport required. 🗺️💖",
-                "Liraz, you're the only number that truly multiplies my happiness. 🎯❤️",
-                "I'd spend all my money traveling with you, Liraz. 🌴💳",
                 "Liraz, you're my million-dollar smile and my greatest treasure. 😄💎",
-                "With you, every day feels like a luxurious vacation, Liraz. 🏖️💕",
-                "Liraz, our love story is worth more than bitcoin. 💰📱❤️",
-                "You're the jackpot I never knew I needed, Liraz. 🎰💕",
-                "Liraz, let's collect memories instead of money—with you, I'm already rich. 📸✨"
+                "Liraz, our love story is worth more than bitcoin. 💰📱❤️"
             ];
-            
             lirazNote.textContent = notes[Math.floor(Math.random() * notes.length)];
             lirazNote.classList.remove('opacity-0');
 
@@ -146,15 +121,12 @@
             wrapper.innerHTML = ''; 
             document.getElementById('resultsContainer').classList.remove('hidden');
 
-            // Draw the Kinematic Chart
             drawResonanceChart(parseFloat(motorHz), parseFloat(kineticHz));
 
             try {
-                // Fetch generated numbers without the sequence parameter
                 const res = await fetch(`api/draw?motor=${motorHz}&kinetic=${kineticHz}`);
                 const data = await res.json();
                 
-                // Render main 6 numbers
                 data.yielded_numbers.forEach((num, i) => {
                     const b = document.createElement('div');
                     b.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-gray-900 font-bold text-xl shadow-lg';
@@ -163,22 +135,18 @@
                     setTimeout(() => b.classList.add('show'), i * 150);
                 });
 
-                // Render Strong Number Separator
                 const plus = document.createElement('div');
                 plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
                 plus.textContent = '+';
                 wrapper.appendChild(plus);
 
-                // Render Strong Number
                 const sBall = document.createElement('div');
                 sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
                 sBall.textContent = data.strong_number;
                 wrapper.appendChild(sBall);
 
                 setTimeout(() => { plus.classList.add('show'); sBall.classList.add('show'); }, 900);
-
             } catch (err) {
-                console.error(err);
                 wrapper.innerHTML = `<p class="text-red-400 text-center w-full">Hardware Simulation Error</p>`;
             } finally {
                 btn.disabled = false;
@@ -186,7 +154,6 @@
             }
         });
 
-        // The Physical Resonance Chart Function
         function drawResonanceChart(motorHz, kineticHz) {
             const ctx = document.getElementById('waveChart').getContext('2d');
             const labels = [];
@@ -194,17 +161,53 @@
             const pointColors = [];
             const pointRadii = [];
 
-            // Simulating 3 seconds of physical time in the drum
             for (let t = 0; t <= 3.0; t += 0.01) {
                 labels.push(t.toFixed(2) + "s");
-                
-                // Beat Frequency Formula: sin(2*pi*f1*t) + sin(2*pi*f2*t)
                 const w1 = Math.sin(2 * Math.PI * motorHz * t);
                 const w2 = Math.sin(2 * Math.PI * kineticHz * t);
                 const compoundWave = w1 + w2; 
-                
                 dataPoints.push(compoundWave);
 
-                // If the pressure spikes past 1.9 (out of a max 2.0), the trapdoor opens!
                 if (compoundWave > 1.9) {
-                    pointColors.push('rgba(239, 68, 68, 1)'); // Red dot
+                    pointColors.push('rgba(239, 68, 68, 1)');
+                    pointRadii.push(3);
+                } else {
+                    pointColors.push('rgba(0,0,0,0)');
+                    pointRadii.push(0);
+                }
+            }
+
+            if (waveChartInstance) waveChartInstance.destroy();
+            waveChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Internal Kinetic Pressure',
+                        data: dataPoints,
+                        borderColor: 'rgba(56, 189, 248, 0.8)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: pointColors,
+                        pointRadius: pointRadii,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            display: true,
+                            grid: { color: 'rgba(75, 85, 99, 0.3)' },
+                            min: -2.5,
+                            max: 2.5
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
