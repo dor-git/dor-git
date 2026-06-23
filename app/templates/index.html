@@ -48,7 +48,7 @@
             <div id="guideContent" class="hidden px-4 py-3 text-sm text-gray-400 border-t border-gray-700 space-y-4 bg-gray-800">
                 <div>
                     <strong class="text-sky-400">1. Motor Base (Hz) - The Spinning Paddle</strong><br>
-                    Standard Israeli Loto machines use mechanical paddles rotating at ~45-50 RPM (approx <strong>0.75 Hz</strong>). Adjust this to set the drum's primary mechanical rhythm.
+                    Standard machines use mechanical paddles rotating at ~45-50 RPM (approx <strong>0.75 Hz</strong>). Adjust this to set the drum's primary mechanical rhythm.
                 </div>
                 <div>
                     <strong class="text-sky-400">2. Kinetic Mass (Hz) - The Bouncing Balls</strong><br>
@@ -106,13 +106,7 @@
             const wrapper = document.getElementById('ballsWrapper');
             const lirazNote = document.getElementById('lirazNote');
             
-            const notes = [
-                "Liraz, you are my Already a Millionaire. ❤️",
-                "Liraz, you are my golden ratio. ❤️",
-                "I love you more than quantum randomness, Liraz! ✨",
-                "Liraz, you're my million-dollar smile and my greatest treasure. 😄💎",
-                "Liraz, our love story is worth more than bitcoin. 💰📱❤️"
-            ];
+            const notes = [];
             lirazNote.textContent = notes[Math.floor(Math.random() * notes.length)];
             lirazNote.classList.remove('opacity-0');
 
