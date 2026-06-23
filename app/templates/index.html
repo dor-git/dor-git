@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinematic Resonance Generator</title>
+    <title>Kinematic Resonance Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,6 +23,35 @@
     <div class="max-w-2xl w-full bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
         <h1 class="text-3xl font-bold text-center text-yellow-500 mb-2">Kinematic Resonance Engine ⚙️</h1>
         <p class="text-gray-400 text-center mb-6 text-sm">Simulating physical beat frequencies and trapdoor ejection.</p>
+
+        <div class="mb-8 border border-gray-700 rounded-lg bg-gray-900/50 overflow-hidden">
+            <button type="button" id="guideToggle" class="w-full px-4 py-3 text-left text-sm font-semibold text-gray-300 hover:bg-gray-700 focus:outline-none flex justify-between items-center transition-colors">
+                <span>⚙️ Kinematic Tuning Guide</span>
+                <svg id="guideIcon" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="guideContent" class="hidden px-4 py-3 text-sm text-gray-400 border-t border-gray-700 space-y-4 bg-gray-800">
+                <div>
+                    <strong class="text-sky-400">1. Motor Base (Hz) - The Spinning Paddle</strong><br>
+                    This represents the mechanical speed of the machine's base. Standard Smartplay Halogen machines operate at roughly 45 RPM, which translates to <strong>0.75 Hz</strong>. Adjust this to change the primary, steady rhythm of the drum.
+                </div>
+                <div>
+                    <strong class="text-sky-400">2. Kinetic Mass (Hz) - The Bouncing Balls</strong><br>
+                    This represents the chaotic interference pattern of the balls hitting the acrylic walls. A default of <strong>3.14 Hz</strong> provides a natural, chaotic ricochet frequency. Adjust this to alter how aggressively the mass interferes with the motor.
+                </div>
+                <div class="bg-gray-900 p-3 rounded border border-gray-700">
+                    <strong class="text-yellow-500">How to Tune (The Red Dots)</strong><br>
+                    Your goal is to find two frequencies that create a clean "Beat Frequency". Spin the drum and watch the graph. 
+                    <ul class="list-disc ml-5 mt-1 space-y-1 text-gray-300">
+                        <li>The <strong>Red Dots</strong> indicate the exact millisecond the trapdoor swings open (Internal Pressure > 1.90).</li>
+                        <li>If there are <strong>no red dots</strong>, the waves are canceling each other out (destructive interference).</li>
+                        <li>If the graph is <strong>flooded with red</strong>, the drum is moving too erratically.</li>
+                        <li>Tune the sliders until you get distinct, rhythmic ejections!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
         <form id="drawForm" class="space-y-6 mb-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -64,8 +93,17 @@
     </div>
 
     <script>
-        let waveChartInstance = null;
+        let waveChartInstance = null; // Hold the chart instance
 
+        // Toggle logic for the Kinematic Tuning Guide
+        document.getElementById('guideToggle').addEventListener('click', () => {
+            const content = document.getElementById('guideContent');
+            const icon = document.getElementById('guideIcon');
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        });
+
+        // Auto-fetch the next sequence number on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('api/next-sequence');
@@ -74,6 +112,7 @@
             } catch (err) { console.error("Could not fetch sequence"); }
         });
 
+        // Form submission listener
         document.getElementById('drawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const seq = document.getElementById('seqInput').value;
@@ -84,11 +123,30 @@
             const wrapper = document.getElementById('ballsWrapper');
             const lirazNote = document.getElementById('lirazNote');
             
+            // The Liraz Easter Egg
             const notes = [
                 "Liraz, you are my Already a Millionaire. ❤️",
+                "Liraz, you are my golden ratio. ❤️",
+                "I love you more than quantum randomness, Liraz! ✨",
+                "This sequence is lucky, but I'm luckier to have you, Liraz. 🌹",
+                "Liraz, you are the absolute best part of my universe. 🌌",
+                "Calculating numbers, but my heart is entirely set on Liraz. 💖",
+                "Liraz, you are my one in a billion. 🥰",
+                "Liraz, you're worth more than all the lottery numbers combined. 💰✨",
+                "With you, I'm richer than any winning jackpot, Liraz. 💎💕",
+                "Liraz, loving you is the best investment I've ever made. 📈❤️",
+                "Every place is home when you're there, Liraz. 🌍🏠",
+                "Liraz, I'd travel a thousand worlds just to see you smile. ✈️😊",
+                "You're my favorite adventure, Liraz. No passport required. 🗺️💖",
+                "Liraz, you're the only number that truly multiplies my happiness. 🎯❤️",
+                "I'd spend all my money traveling with you, Liraz. 🌴💳",
+                "Liraz, you're my million-dollar smile and my greatest treasure. 😄💎",
+                "With you, every day feels like a luxurious vacation, Liraz. 🏖️💕",
                 "Liraz, our love story is worth more than bitcoin. 💰📱❤️",
-                "You're the jackpot I never knew I needed, Liraz. 🎰💕"
+                "You're the jackpot I never knew I needed, Liraz. 🎰💕",
+                "Liraz, let's collect memories instead of money—with you, I'm already rich. 📸✨"
             ];
+            
             lirazNote.textContent = notes[Math.floor(Math.random() * notes.length)];
             lirazNote.classList.remove('opacity-0');
 
@@ -97,13 +155,15 @@
             wrapper.innerHTML = ''; 
             document.getElementById('resultsContainer').classList.remove('hidden');
 
+            // Draw the Kinematic Chart
             drawResonanceChart(parseFloat(motorHz), parseFloat(kineticHz));
 
             try {
-                // Notice the API path changed to accept the physical parameters
+                // Fetch generated numbers from Python Backend with the new physical parameters
                 const res = await fetch(`api/draw?seq=${seq}&motor=${motorHz}&kinetic=${kineticHz}`);
                 const data = await res.json();
                 
+                // Render main 6 numbers
                 data.yielded_numbers.forEach((num, i) => {
                     const b = document.createElement('div');
                     b.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-gray-900 font-bold text-xl shadow-lg';
@@ -112,87 +172,6 @@
                     setTimeout(() => b.classList.add('show'), i * 150);
                 });
 
+                // Render Strong Number Separator
                 const plus = document.createElement('div');
-                plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text-2xl';
-                plus.textContent = '+';
-                wrapper.appendChild(plus);
-
-                const sBall = document.createElement('div');
-                sBall.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center text-white font-bold text-xl shadow-lg';
-                sBall.textContent = data.strong_number;
-                wrapper.appendChild(sBall);
-
-                setTimeout(() => { plus.classList.add('show'); sBall.classList.add('show'); }, 900);
-
-            } catch (err) {
-                console.error(err);
-                wrapper.innerHTML = `<p class="text-red-400 text-center w-full">Hardware Simulation Error</p>`;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Spin Virtual Drum";
-            }
-        });
-
-        function drawResonanceChart(motorHz, kineticHz) {
-            const ctx = document.getElementById('waveChart').getContext('2d');
-            const labels = [];
-            const dataPoints = [];
-            const pointColors = [];
-            const pointRadii = [];
-
-            // Simulating 3 seconds of physical time in the drum
-            for (let t = 0; t <= 3.0; t += 0.01) {
-                labels.push(t.toFixed(2) + "s");
-                
-                // Beat Frequency Formula: sin(2*pi*f1*t) + sin(2*pi*f2*t)
-                const w1 = Math.sin(2 * Math.PI * motorHz * t);
-                const w2 = Math.sin(2 * Math.PI * kineticHz * t);
-                const compoundWave = w1 + w2; 
-                
-                dataPoints.push(compoundWave);
-
-                // If the pressure spikes past 1.9 (out of a max 2.0), the trapdoor opens!
-                if (compoundWave > 1.9) {
-                    pointColors.push('rgba(239, 68, 68, 1)'); // Red dot indicating ejection
-                    pointRadii.push(3);
-                } else {
-                    pointColors.push('rgba(0,0,0,0)');
-                    pointRadii.push(0);
-                }
-            }
-
-            if (waveChartInstance) waveChartInstance.destroy();
-
-            waveChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Internal Kinetic Pressure',
-                        data: dataPoints,
-                        borderColor: 'rgba(56, 189, 248, 0.8)', // Tailwind sky-400
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointBackgroundColor: pointColors,
-                        pointRadius: pointRadii,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: false },
-                        y: {
-                            display: true,
-                            grid: { color: 'rgba(75, 85, 99, 0.3)' },
-                            min: -2.5,
-                            max: 2.5
-                        }
-                    }
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+                plus.className = 'ball w-8 h-12 flex items-center justify-center text-gray-500 font-bold text
